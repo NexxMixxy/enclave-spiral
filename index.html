@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enclave Spiral — Tupperbox Proxy Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Loading Screen Spinner -->
+  <div id="loading-overlay">
+    <div class="spinner"></div>
+    <div class="loading-text" id="loading-message">Loading Enclave Spiral...</div>
+  </div>
+
+  <div class="app-wrapper">
+    <!-- Header -->
+    <header>
+      <h1>
+        <span>🌀</span> Enclave Spiral
+      </h1>
+      <div id="header-user-info" class="hidden">
+        <div class="user-badge">
+          <span id="header-gamer-tag">User</span>
+          <span id="header-role-badge" class="slot-status active">USER</span>
+          <button class="cog-btn" id="cog-settings-btn" title="Admin/Mod Console">⚙️</button>
+          <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;" onclick="logout()">Logout</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main>
+      <div id="alert-container" class="alert-box"></div>
+
+      <!-- VIEW 1: AUTHENTICATION (Login / Register) -->
+      <section id="view-auth">
+        <div class="auth-tabs">
+          <button class="tab-btn active" onclick="switchAuthTab('login')">Login</button>
+          <button class="tab-btn" onclick="switchAuthTab('register')">Register Account</button>
+        </div>
+
+        <!-- Login Form -->
+        <div id="form-login-pane">
+          <h2 style="margin-bottom: 16px; font-size: 18px;">Welcome Back</h2>
+          <div class="form-group">
+            <label>GamerTag</label>
+            <input type="text" id="login-gamer-tag" placeholder="Enter your GamerTag or EnclaveAdmin">
+          </div>
+          <div class="form-group">
+            <label>Password / Admin Key</label>
+            <input type="password" id="login-password" placeholder="Password">
+          </div>
+          <button class="btn" onclick="submitLogin()">Access Dashboard</button>
+        </div>
+
+        <!-- Register Form -->
+        <div id="form-register-pane" class="hidden">
+          <h2 style="margin-bottom: 16px; font-size: 18px;">Register New Profile</h2>
+          <div class="form-group">
+            <label>GamerTag (3-32 chars)</label>
+            <input type="text" id="reg-gamer-tag" placeholder="Choose your username">
+          </div>
+          <div class="form-group">
+            <label>Password or Staff Key</label>
+            <input type="password" id="reg-password" placeholder="Password or KEY">
+          </div>
+          <div class="form-group" id="mod-pass-group" style="display:none;">
+            <label>Create Personal Moderator Password</label>
+            <input type="password" id="reg-mod-password" placeholder="At least 4 characters for future logins">
+          </div>
+          <div class="form-group">
+            <label>Discord User ID (Optional)</label>
+            <input type="text" id="reg-discord-id" placeholder="Your numeric Discord ID for bot linking">
+          </div>
+          <button class="btn btn-accent" onclick="submitRegister()">Create Account & Slots</button>
+        </div>
+      </section>
+
+      <!-- VIEW 2: MOD PASSWORD SETUP (If Mod registered with MOD_KEY_2026) -->
+      <section id="view-mod-setup" class="hidden">
+        <h2 style="margin-bottom: 16px; font-size: 18px;">Set Moderator Personal Password</h2>
+        <p style="margin-bottom: 16px; font-size: 13px; color: var(--text-muted);">
+          You registered with the Moderator Key. Please set your own secure password for future logins.
+        </p>
+        <div class="form-group">
+          <label>New Personal Password</label>
+          <input type="password" id="mod-setup-new-pass" placeholder="New secure password">
+        </div>
+        <button class="btn" onclick="submitModPasswordSetup()">Save Password & Enter Dashboard</button>
+      </section>
+
+      <!-- VIEW 3: USER / MOD / ADMIN DASHBOARD -->
+      <section id="view-dashboard" class="hidden">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <div>
+            <h2 id="dash-welcome-title" style="font-size: 18px;">Character Slots</h2>
+            <p style="font-size: 13px; color: var(--text-muted);">Manage your active tupper profiles and avatars.</p>
+          </div>
+          <button id="add-slot-btn" class="btn btn-secondary" onclick="createExtraSlot()">+ Add Slot</button>
+        </div>
+
+        <div id="slots-container" class="slots-grid">
+          <!-- Populated dynamically -->
+        </div>
+      </section>
+
+      <!-- VIEW 4: ADMIN / MOD CONSOLE (⚙️ Cog Access) -->
+      <section id="view-console" class="hidden">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <div>
+            <h2 style="font-size: 18px;">Staff Administration Console</h2>
+            <p style="font-size: 13px; color: var(--text-muted);">Manage user slot activations and bot emoji database.</p>
+          </div>
+          <button class="btn btn-secondary" onclick="returnToDashboard()">Back to Dashboard</button>
+        </div>
+
+        <!-- Admin User Slot Manager -->
+        <div id="admin-only-section" class="console-section">
+          <h3 style="font-size: 15px; margin-bottom: 10px;">User Slot Activation Manager</h3>
+          <div style="overflow-x: auto;">
+            <table id="admin-users-table">
+              <thead>
+                <tr>
+                  <th>GamerTag</th>
+                  <th>Role</th>
+                  <th>Active Slots</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Bot Emoji Database Manager -->
+        <div class="console-section">
+          <h3 style="font-size: 15px; margin-bottom: 10px;">Bot Emoji Database</h3>
+          <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+            <input type="text" id="emoji-shortcode" placeholder="Shortcode (e.g. :quote:)" style="flex: 1;">
+            <input type="text" id="emoji-format" placeholder="Discord Format (&lt;:name:id&gt;)" style="flex: 2;">
+            <button class="btn" onclick="addBotEmoji()">Add Emoji</button>
+          </div>
+          <div style="overflow-x: auto;">
+            <table id="admin-emojis-table">
+              <thead>
+                <tr>
+                  <th>Shortcode</th>
+                  <th>Discord Format</th>
+                  <th>Category</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+      <span>Enclave Spiral &copy; 2026</span>
+      <a href="tos.html">Terms of Service</a> |
+      <a href="privacy.html">Privacy Policy</a>
+    </footer>
+  </div>
+
+  <!-- Hidden File Input for Avatar Cropper -->
+  <input type="file" id="hidden-file-input" accept="image/*" class="hidden" onchange="handleFileSelected(event)">
+
+  <!-- Frontend Controller Script -->
+  <script>
+    // REPLACE WITH GOOGLE APPS SCRIPT WEB APP URL
+    const API_URL = "https://script.google.com/macros/s/AKfycbz3gUKAySHmbGf9xzBTUWBTW1-ZAxKLL_K18z1KIQeEXHxTlSTxjJlUaho7oWF7EunauQ/exec";
+
+    let currentUser = null;
+    let currentDashboardData = null;
+    let activeSlotEditing = null;
+
+    function showLoading(msg = "Loading...") {
+      document.getElementById("loading-message").innerText = msg;
+      document.getElementById("loading-overlay").classList.remove("hidden");
+    }
+
+    function hideLoading() {
+      document.getElementById("loading-overlay").classList.add("hidden");
+    }
+
+    function showAlert(message, type = "error") {
+      const box = document.getElementById("alert-container");
+      box.className = "alert-box " + type;
+      box.innerText = message;
+      setTimeout(() => { box.className = "alert-box hidden"; }, 6000);
+    }
+
+    function switchAuthTab(tab) {
+      const loginPane = document.getElementById("form-login-pane");
+      const regPane = document.getElementById("form-register-pane");
+      const btns = document.querySelectorAll(".tab-btn");
+
+      btns.forEach(b => b.classList.remove("active"));
+      if (tab === 'login') {
+        loginPane.classList.remove("hidden");
+        regPane.classList.add("hidden");
+        btns[0].classList.add("active");
+      } else {
+        loginPane.classList.add("hidden");
+        regPane.classList.remove("hidden");
+        btns[1].classList.add("active");
+      }
+    }
+
+    document.getElementById("reg-password").addEventListener("input", (e) => {
+      const modGroup = document.getElementById("mod-pass-group");
+      if (e.target.value.trim() === "MOD_KEY_2026") {
+        modGroup.style.display = "block";
+      } else {
+        modGroup.style.display = "none";
+      }
+    });
+
+    async function apiCall(action, payload = {}) {
+      payload.action = action;
+      try {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        });
+        return await res.json();
+      } catch (err) {
+        return { success: false, error: err.message || "Network request failed." };
+      }
+    }
+
+    async function submitLogin() {
+      const gamerTag = document.getElementById("login-gamer-tag").value.trim();
+      const password = document.getElementById("login-password").value.trim();
+
+      if (!gamerTag || !password) {
+        showAlert("Please enter your GamerTag and password.");
+        return;
+      }
+
+      showLoggingIn();
+      const res = await apiCall("login", { gamerTag, password });
+      hideLoading();
+
+      if (!res.success) {
+        showAlert(res.error);
+        return;
+      }
+
+      currentUser = res.user;
+      currentDashboardData = res.dashboardData || (await fetchDashboard(currentUser.gamerTag));
+
+      if (currentUser.needsPasswordSetup) {
+        showView("view-mod-setup");
+      } else {
+        renderDashboard();
+      }
+    }
+
+    async function submitRegister() {
+      const gamerTag = document.getElementById("reg-gamer-tag").value.trim();
+      const password = document.getElementById("reg-password").value.trim();
+      const customModPassword = document.getElementById("reg-mod-password").value.trim();
+      const discordId = document.getElementById("reg-discord-id").value.trim();
+
+      if (!gamerTag || !password) {
+        showAlert("GamerTag and password are required.");
+        return;
+      }
+
+      showLoading("Creating account...");
+      const res = await apiCall("register", { gamerTag, password, customModPassword, discordId });
+      hideLoading();
+
+      if (!res.success) {
+        showAlert(res.error);
+        return;
+      }
+
+      currentUser = res.user;
+      if (currentUser.needsPasswordSetup) {
+        showView("view-mod-setup");
+      } else {
+        currentDashboardData = await fetchDashboard(currentUser.gamerTag);
+        renderDashboard();
+      }
+    }
+
+    async function submitModPasswordSetup() {
+      const newPassword = document.getElementById("mod-setup-new-pass").value.trim();
+      if (!newPassword || newPassword.length < 4) {
+        showAlert("Password must be at least 4 characters.");
+        return;
+      }
+
+      showLoading("Setting password...");
+      const res = await apiCall("setModPassword", {
+        gamerTag: currentUser.gamerTag,
+        currentPassword: "MOD_KEY_2026",
+        newPassword: newPassword
+      });
+      hideLoading();
+
+      if (!res.success) {
+        showAlert(res.error);
+        return;
+      }
+
+      currentUser.needsPasswordSetup = false;
+      currentDashboardData = await fetchDashboard(currentUser.gamerTag);
+      renderDashboard();
+    }
+
+    async function fetchDashboard(gamerTag) {
+      const res = await apiCall("getDashboardData", { gamerTag });
+      if (res.success) return res.data;
+      return null;
+    }
+
+    function showView(viewId) {
+      ["view-auth", "view-mod-setup", "view-dashboard", "view-console"].forEach(id => {
+        document.getElementById(id).classList.add("hidden");
+      });
+      document.getElementById(viewId).classList.remove("hidden");
+
+      if (viewId !== "view-auth" && viewId !== "view-mod-setup") {
+        document.getElementById("header-user-info").classList.remove("hidden");
+        document.getElementById("header-gamer-tag").innerText = currentUser.gamerTag;
+        document.getElementById("header-role-badge").innerText = currentUser.role;
+        document.getElementById("header-role-badge").className = "slot-status " + (currentUser.role === "ADMIN" ? "active" : "deactivated");
+        
+        const cog = document.getElementById("cog-settings-btn");
+        if (currentUser.role === "ADMIN" || currentUser.role === "MOD") {
+          cog.style.display = "inline-block";
+          cog.onclick = openStaffConsole;
+        } else {
+          cog.style.display = "none";
+        }
+      } else {
+        document.getElementById("header-user-info").classList.add("hidden");
+      }
+    }
+
+    function renderDashboard() {
+      showView("view-dashboard");
+      const container = document.getElementById("slots-container");
+      container.innerHTML = "";
+
+      if (!currentDashboardData || !currentDashboardData.characters) return;
+
+      currentDashboardData.characters.forEach(char => {
+        const card = document.createElement("div");
+        card.className = "slot-card " + (char.isSlotActive ? "" : "inactive");
+        
+        const statusBadge = char.isSlotActive 
+          ? '<span class="slot-status active">Active Slot</span>' 
+          : '<span class="slot-status deactivated">Deactivated (Locked)</span>';
+
+        card.innerHTML = `
+          <div class="slot-header">
+            <span>Slot #${char.slotNumber}</span>
+            ${statusBadge}
+          </div>
+          <div class="avatar-preview-box">
+            <img src="${char.avatarUrl || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="%236C757D" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>'}" alt="Avatar">
+          </div>
+          <div class="form-group" style="margin-bottom: 8px;">
+            <label>Avatar Name</label>
+            <input type="text" id="avatar-name-${char.slotNumber}" value="${char.avatarName || ''}" placeholder="Character Name" ${!char.isSlotActive ? 'disabled' : ''}>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-secondary" style="flex: 1; font-size: 12px;" onclick="triggerAvatarUpload(${char.slotNumber})" ${!char.isSlotActive ? 'disabled' : ''}>Upload Avatar</button>
+            <button class="btn" style="flex: 1; font-size: 12px;" onclick="saveCharacterSlot(${char.slotNumber})" ${!char.isSlotActive ? 'disabled' : ''}>Save</button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function triggerAvatarUpload(slotNumber) {
+      activeSlotEditing = slotNumber;
+      document.getElementById("hidden-file-input").click();
+    }
+
+    function handleFileSelected(event) {
+      const file = event.target.files[0];
+      if (!file || !activeSlotEditing) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        // Auto-scale and crop image via canvas before sending to Google Drive
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement("canvas");
+          const size = 300; // Standardize avatars to 300x300 square for Discord webhooks
+          canvas.width = size;
+          canvas.height = size;
+          const ctx = canvas.getContext("2d");
+
+          let w = img.width;
+          let h = img.height;
+          let offsetX = 0;
+          let offsetY = 0;
+
+          if (w > h) {
+            offsetX = (w - h) / 2;
+            w = h;
+          } else {
+            offsetY = (h - w) / 2;
+            h = w;
+          }
+
+          ctx.drawImage(img, offsetX, offsetY, w, h, 0, 0, size, size);
+          const croppedBase64 = canvas.toDataURL("image/png");
+
+          // Update local preview immediately
+          const cardInput = document.getElementById(`avatar-name-${activeSlotEditing}`);
+          // Send to backend
+          saveCharacterSlotWithImage(activeSlotEditing, croppedBase64);
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+      event.target.value = "";
+    }
+
+    async function saveCharacterSlot(slotNumber) {
+      const avatarName = document.getElementById(`avatar-name-${slotNumber}`).value.trim();
+      if (!avatarName) {
+        showAlert("Avatar Name cannot be empty.");
+        return;
+      }
+
+      showLoading("Saving character...");
+      const res = await apiCall("saveCharacter", {
+        gamerTag: currentUser.gamerTag,
+        slotNumber: slotNumber,
+        avatarName: avatarName
+      });
+      hideLoading();
+
+      if (!res.success) {
+        showAlert(res.error);
+        return;
+      }
+
+      showAlert("Character profile updated successfully!", "success");
+      currentDashboardData = await fetchDashboard(currentUser.gamerTag);
+      renderDashboard();
+    }
+
+    async function saveCharacterSlotWithImage(slotNumber, base64Image) {
+      const avatarName = document.getElementById(`avatar-name-${slotNumber}`).value.trim() || ("Slot " + slotNumber);
+
+      showLoading("Uploading avatar to Drive...");
+      const res = await apiCall("saveCharacter", {
+        gamerTag: currentUser.gamerTag,
+        slotNumber: slotNumber,
+        avatarName: avatarName,
+        avatarBase64: base64Image
+      });
+      hideLoading();
+
+      if (!res.success) {
+        showAlert(res.error);
+        return;
+      }
+
+      showAlert("Avatar cropped and uploaded successfully!", "success");
+      currentDashboardData = await fetchDashboard(currentUser.gamerTag);
+      renderDashboard();
+    }
+
+    async function createExtraSlot() {
+      showLoading("Unlocking new slot...");
+      const res = await apiCall("createAdminOrModSlot", { gamerTag: currentUser.gamerTag });
+      hideLoading();
+
+      if (!res.success) {
+        showAlert(res.error);
+        return;
+      }
+
+      currentDashboardData = await fetchDashboard(currentUser.gamerTag);
+      renderDashboard();
+      showAlert("New character slot unlocked!", "success");
+    }
+
+    async function openStaffConsole() {
+      showView("view-console");
+      showLoading("Loading console...");
+
+      if (currentUser.role === "ADMIN") {
+        document.getElementById("admin-only-section").style.display = "block";
+        const res = await apiCall("adminListUsers", {
+          adminGamerTag: currentUser.gamerTag,
+          adminPassword: prompt("Enter Admin Password (ADMIN_KEY_2026):")
+        });
+        if (res.success) {
+          renderAdminUsersTable(res.users);
+        } else {
+          showAlert(res.error);
+          returnToDashboard();
+        }
+      } else {
+        document.getElementById("admin-only-section").style.display = "none";
+      }
+
+      const emojiRes = await apiCall("getEmojis");
+      if (emojiRes.success) {
+        renderEmojisTable(emojiRes.emojis);
+      }
+      hideLoading();
+    }
+
+    function renderAdminUsersTable(users) {
+      const tbody = document.querySelector("#admin-users-table tbody");
+      tbody.innerHTML = "";
+
+      users.forEach(u => {
+        const tr = document.createElement("tr");
+        const activeStr = Array.isArray(u.activeSlots) ? u.activeSlots.join(", ") : u.activeSlots;
+        tr.innerHTML = `
+          <td><strong>${u.gamerTag}</strong></td>
+          <td>${u.role}</td>
+          <td><input type="text" id="slots-input-${u.gamerTag}" value="${activeStr}" style="padding: 4px 8px; width: 120px;"></td>
+          <td><button class="btn" style="padding: 4px 10px; font-size: 12px;" onclick="updateUserSlots('${u.gamerTag}')">Update Slots</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function updateUserSlots(targetGamerTag) {
+      const val = document.getElementById(`slots-input-${targetGamerTag}`).value;
+      const slotsArray = val.split(",").map(s => s.trim() === "ALL" ? "ALL" : Number(s.trim())).filter(s => s === "ALL" || !isNaN(s));
+
+      const adminPass = prompt("Confirm Admin Password (ADMIN_KEY_2026):");
+      showLoading("Updating slots...");
+      const res = await apiCall("adminToggleSlots", {
+        adminGamerTag: currentUser.gamerTag,
+        adminPassword: adminPass,
+        targetGamerTag: targetGamerTag,
+        activeSlots: slotsArray
+      });
+      hideLoading();
+
+      if (!res.success) {
+        showAlert(res.error);
+        return;
+      }
+      showAlert(`Updated active slots for ${targetGamerTag}`, "success");
+    }
+
+    function renderEmojisTable(emojis) {
+      const tbody = document.querySelector("#admin-emojis-table tbody");
+      tbody.innerHTML = "";
+
+      emojis.forEach(e => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><code>${e.shortcode}</code></td>
+          <td><code>${e.discordFormat}</code></td>
+          <td>${e.category}</td>
+          <td><button class="btn btn-danger" style="padding: 4px 8px; font-size: 11px;" onclick="deleteEmoji('${e.emojiId}')">Delete</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function addBotEmoji() {
+      const shortcode = document.getElementById("emoji-shortcode").value.trim();
+      const discordFormat = document.getElementById("emoji-format").value.trim();
+
+      if (!shortcode || !discordFormat) {
+        showAlert("Both shortcode and Discord emoji format are required.");
+        return;
+      }
+
+      const adminPass = prompt("Confirm Admin Password (ADMIN_KEY_2026):");
+      showLoading("Adding emoji...");
+      const res = await apiCall("adminAddEmoji", {
+        adminGamerTag: currentUser.gamerTag,
+        adminPassword: adminPass,
+        shortcode: shortcode,
+        discordFormat: discordFormat
+      });
+      hideLoading();
+
+      if (!res.success) {
+        showAlert(res.error);
+        return;
+      }
+
+      document.getElementById("emoji-shortcode").value = "";
+      document.getElementById("emoji-format").value = "";
+      showAlert("Emoji added to bot database!", "success");
+      openStaffConsole();
+    }
+
+    async function deleteEmoji(emojiId) {
+      if (!confirm("Are you sure you want to delete this emoji from the bot database?")) return;
+
+      const adminPass = prompt("Confirm Admin Password (ADMIN_KEY_2026):");
+      showLoading("Deleting emoji...");
+      const res = await apiCall("adminDeleteEmoji", {
+        adminGamerTag: currentUser.gamerTag,
+        adminPassword: adminPass,
+        emojiId: emojiId
+      });
+      hideLoading();
+
+      if (!res.success) {
+        showAlert(res.error);
+        return;
+      }
+      showAlert("Emoji deleted.", "success");
+      openStaffConsole();
+    }
+
+    function returnToDashboard() {
+      renderDashboard();
+    }
+
+    function logout() {
+      currentUser = null;
+      currentDashboardData = null;
+      showView("view-auth");
+    }
+
+    // Hide loading screen on load
+    window.addEventListener("DOMContentLoaded", () => {
+      hideLoading();
+    });
+  </script>
+</body>
+</html>
