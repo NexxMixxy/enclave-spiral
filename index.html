@@ -3,306 +3,431 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Enclave Spiral — Proxy App</title>
+  <title>Enclave Spiral</title>
   <style>
+    /* Pastel Light Theme (Default) */
     :root {
-      --bg-dark: #0b0d13;
-      --bg-panel: #141824;
-      --bg-input: #1d2233;
-      --accent: #7c5cff;
-      --accent-hover: #967BFF;
-      --success: #2ecc71;
-      --danger: #ff4757;
-      --text-main: #f1f2f6;
-      --text-muted: #9ba3b8;
-      --border: #2a3147;
+      --bg-base: #f6f5f2;
+      --bg-surface: #ffffff;
+      --bg-subtle: #efede8;
+      --text-primary: #2b2d38;
+      --text-secondary: #686d80;
+      --border-color: #dfdcd5;
+      --accent-primary: #7c8ce0;
+      --accent-hover: #6778d1;
+      --accent-soft: #e8ecfb;
+      --status-active: #76b59b;
+      --status-danger: #d9828b;
+      --shadow-soft: 0 4px 18px rgba(43, 45, 56, 0.06);
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
-    body { background: var(--bg-dark); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; }
-    
-    /* Header */
+
+    /* Pastel Dark Theme (Synced with OS) */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-base: #16171d;
+        --bg-surface: #1f212b;
+        --bg-subtle: #282b38;
+        --text-primary: #eceef4;
+        --text-secondary: #9aa0b5;
+        --border-color: #323646;
+        --accent-primary: #a3b1f8;
+        --accent-hover: #bac5ff;
+        --accent-soft: rgba(163, 177, 248, 0.14);
+        --status-active: #8cc9ad;
+        --status-danger: #eba0a8;
+        --shadow-soft: 0 6px 24px rgba(0, 0, 0, 0.28);
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      line-height: 1.5;
+    }
+
     header {
-      background: var(--bg-panel);
-      border-bottom: 1px solid var(--border);
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-color);
       padding: 14px 24px;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
-    .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.2rem; letter-spacing: 0.5px; }
-    .brand span { color: var(--accent); }
-    .user-bar { display: flex; align-items: center; gap: 12px; }
 
-    /* Layout */
-    .container { max-width: 1040px; width: 100%; margin: 24px auto; padding: 0 16px; flex: 1; }
-    .card {
-      background: var(--bg-panel);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 24px;
-      margin-bottom: 20px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+    .brand {
+      font-weight: 700;
+      font-size: 1.05rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--text-primary);
     }
 
-    /* Tabs */
-    .tabs { display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 12px; flex-wrap: wrap; }
-    .tab-btn {
-      background: var(--bg-input);
-      color: var(--text-muted);
-      border: 1px solid var(--border);
-      padding: 10px 18px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: 0.2s;
+    .brand span {
+      color: var(--accent-primary);
     }
-    .tab-btn.active, .tab-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
 
-    /* Forms & Inputs */
-    .form-group { margin-bottom: 16px; }
-    label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; }
-    input, select, textarea {
-      width: 100%;
-      background: var(--bg-input);
-      border: 1px solid var(--border);
-      color: var(--text-main);
-      padding: 10px 14px;
-      border-radius: 8px;
-      font-size: 0.95rem;
-    }
-    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
-    
-    .btn {
-      background: var(--accent);
-      color: #fff;
-      border: none;
-      padding: 10px 18px;
-      border-radius: 8px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: 0.2s;
-      display: inline-flex;
+    .user-meta {
+      display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 14px;
+      font-size: 0.88rem;
+      color: var(--text-secondary);
     }
-    .btn:hover { background: var(--accent-hover); }
-    .btn-secondary { background: var(--bg-input); border: 1px solid var(--border); color: var(--text-main); }
-    .btn-danger { background: var(--danger); }
-    .btn-success { background: var(--success); }
 
-    /* Grid & Character Cards */
-    .slots-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 16px; }
-    .slot-card {
-      background: var(--bg-input);
-      border: 1px solid var(--border);
+    .container {
+      max-width: 980px;
+      width: 100%;
+      margin: 24px auto;
+      padding: 0 16px;
+      flex: 1;
+    }
+
+    .card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
       border-radius: 10px;
+      padding: 22px;
+      margin-bottom: 18px;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .section-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text-primary);
+    }
+
+    .section-desc {
+      font-size: 0.86rem;
+      color: var(--text-secondary);
+      margin-bottom: 18px;
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 18px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid transparent;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.88rem;
+      font-weight: 600;
+      transition: all 0.15s ease;
+    }
+
+    .tab-btn:hover {
+      background: var(--bg-subtle);
+      color: var(--text-primary);
+    }
+
+    .tab-btn.active {
+      background: var(--accent-soft);
+      color: var(--accent-primary);
+      border-color: var(--accent-primary);
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="number"],
+    select {
+      width: 100%;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      padding: 9px 12px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--accent-primary);
+    }
+
+    .btn {
+      background: var(--accent-primary);
+      color: #16171d;
+      border: none;
+      padding: 9px 16px;
+      border-radius: 6px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .btn:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn-outline {
+      background: var(--bg-subtle);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-outline:hover {
+      border-color: var(--accent-primary);
+      background: var(--accent-soft);
+    }
+
+    .btn-danger {
+      background: var(--status-danger);
+      color: #16171d;
+    }
+
+    /* Slots & Channel Assignment Grid */
+    .slots-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px;
+    }
+
+    .slot-card {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
       padding: 16px;
       display: flex;
       flex-direction: column;
       gap: 12px;
     }
-    .slot-header { display: flex; align-items: center; gap: 12px; }
-    .avatar-preview {
-      width: 56px;
-      height: 56px;
+
+    .slot-card.bound {
+      border-color: var(--status-active);
+    }
+
+    .slot-top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .avatar-img {
+      width: 52px;
+      height: 52px;
       border-radius: 50%;
       object-fit: cover;
-      border: 2px solid var(--accent);
-      background: #000;
+      border: 2px solid var(--border-color);
+      background: var(--bg-surface);
     }
 
-    /* Emoji Bar */
-    .emoji-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
-    .emoji-chip {
-      background: var(--bg-dark);
-      border: 1px solid var(--border);
-      color: var(--text-main);
-      padding: 4px 10px;
+    .badge {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: var(--bg-surface);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+    }
+
+    .badge.active-route {
+      background: rgba(118, 181, 155, 0.18);
+      color: var(--status-active);
+      border-color: var(--status-active);
+    }
+
+    .category-checklist {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 10px;
+      margin: 12px 0;
+    }
+
+    .cat-item {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-color);
+      padding: 8px 12px;
       border-radius: 6px;
-      font-size: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.86rem;
       cursor: pointer;
     }
-    .emoji-chip:hover { border-color: var(--accent); }
 
-    .status-banner {
-      padding: 12px 16px;
-      border-radius: 8px;
+    .notice-bar {
+      padding: 10px 14px;
+      border-radius: 6px;
       margin-bottom: 16px;
-      font-size: 0.9rem;
+      font-size: 0.86rem;
       display: none;
+      border: 1px solid var(--border-color);
+      background: var(--bg-surface);
     }
-    .status-ok { background: rgba(46, 204, 113, 0.15); border: 1px solid var(--success); color: #2ecc71; display: block; }
-    .status-err { background: rgba(255, 71, 87, 0.15); border: 1px solid var(--danger); color: #ff6b81; display: block; }
-    .hidden { display: none !important; }
+
+    .notice-bar.show {
+      display: block;
+    }
+
+    .notice-bar.error {
+      border-color: var(--status-danger);
+      color: var(--status-danger);
+    }
+
+    .notice-bar.ok {
+      border-color: var(--status-active);
+      color: var(--status-active);
+    }
+
+    .hidden {
+      display: none !important;
+    }
   </style>
 </head>
 <body>
 
   <header>
-    <div class="brand">ENCLAVE <span>SPIRAL</span></div>
-    <div id="userBar" class="user-bar hidden">
-      <span id="welcomeTag" style="font-size:0.9rem; color:var(--text-muted);"></span>
-      <button class="btn btn-secondary" onclick="logout()">Logout</button>
+    <div class="brand">Enclave <span>Spiral</span></div>
+    <div id="userBar" class="user-meta hidden">
+      <span id="welcomeTag"></span>
+      <button class="btn btn-outline" onclick="refreshDashboard()">Refresh Channels</button>
+      <button class="btn btn-outline" onclick="logout()">Sign Out</button>
     </div>
   </header>
 
   <div class="container">
-    <div id="statusBox" class="status-banner"></div>
+    <div id="noticeBox" class="notice-bar"></div>
 
-    <!-- AUTH VIEW -->
-    <div id="authView" class="card" style="max-width: 460px; margin: 40px auto;">
-      <div class="tabs">
-        <button id="tabLoginBtn" class="tab-btn active" onclick="switchAuthTab('login')">Login</button>
-        <button id="tabRegBtn" class="tab-btn" onclick="switchAuthTab('register')">Register Account</button>
+    <!-- AUTHENTICATION -->
+    <div id="authView" class="card" style="max-width: 420px; margin: 40px auto;">
+      <div class="nav-tabs">
+        <button id="tabLoginBtn" class="tab-btn active" onclick="switchAuthTab('login')">Sign In</button>
+        <button id="tabRegBtn" class="tab-btn" onclick="switchAuthTab('register')">Register</button>
       </div>
 
-      <!-- Login Form -->
       <div id="loginForm">
         <div class="form-group">
           <label>GamerTag</label>
-          <input type="text" id="loginTag" placeholder="Enter your GamerTag (e.g. EnclaveAdmin)" />
+          <input type="text" id="loginTag" placeholder="Enter GamerTag" />
         </div>
         <div class="form-group">
           <label>Password</label>
           <input type="password" id="loginPass" placeholder="Enter password" />
         </div>
-        <button class="btn" style="width:100%; justify-content:center;" onclick="submitLogin()">Login to Enclave Spiral</button>
+        <button class="btn" style="width: 100%;" onclick="submitLogin()">Sign In</button>
       </div>
 
-      <!-- Register Form -->
       <div id="registerForm" class="hidden">
         <div class="form-group">
-          <label>Choose a GamerTag</label>
-          <input type="text" id="regTag" placeholder="Your unique username" />
+          <label>GamerTag</label>
+          <input type="text" id="regTag" placeholder="Choose a GamerTag" />
         </div>
         <div class="form-group">
           <label>Password</label>
-          <input type="password" id="regPass" placeholder="Create a password" />
+          <input type="password" id="regPass" placeholder="Create password" />
         </div>
         <div class="form-group">
-          <label>Discord User ID (For /postw Bot Linking)</label>
-          <input type="text" id="regDiscordId" placeholder="e.g. 123456789012345678" />
+          <label>Discord User ID</label>
+          <input type="text" id="regDiscordId" placeholder="Numeric Discord ID" />
         </div>
-        <button class="btn btn-success" style="width:100%; justify-content:center;" onclick="submitRegister()">Create Account</button>
+        <button class="btn" style="width: 100%;" onclick="submitRegister()">Create Account</button>
       </div>
     </div>
 
-    <!-- DASHBOARD & APP VIEW -->
+    <!-- CONTROL PANEL -->
     <div id="dashboardView" class="hidden">
-      <div class="tabs">
-        <button class="tab-btn active" id="navComposer" onclick="switchMainTab('composer')">Roleplay Composer (App)</button>
-        <button class="tab-btn" id="navSlots" onclick="switchMainTab('slots')">Character Slots</button>
-        <button class="tab-btn" id="navAccount" onclick="switchMainTab('account')">Discord Link</button>
-        <button class="tab-btn hidden" id="navAdmin" onclick="switchMainTab('admin')">Admin Console</button>
+      <div class="nav-tabs">
+        <button class="tab-btn active" id="navSlots" onclick="switchMainTab('slots')">Character Routing & Slots</button>
+        <button class="tab-btn" id="navAccount" onclick="switchMainTab('account')">Discord Account Link</button>
+        <button class="tab-btn hidden" id="navAdmin" onclick="switchMainTab('admin')">Administration</button>
       </div>
 
-      <!-- TAB 1: DIRECT ROLEPLAY COMPOSER -->
-      <div id="tabComposer" class="card">
-        <h3 style="margin-bottom: 14px;">Compose & Proxy Message Directly to Discord</h3>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-          <div class="form-group">
-            <label>Post As Character:</label>
-            <select id="composeCharSelect"></select>
-          </div>
-          <div class="form-group">
-            <label>Target Channel Webhook:</label>
-            <select id="composeWebhookSelect" onchange="toggleCustomWebhookInput()"></select>
-          </div>
+      <!-- TAB 1: CHARACTER SLOTS & CHANNEL ROUTING -->
+      <div id="tabSlots" class="card">
+        <div class="section-title">Character Slots & Active Channel Assignment</div>
+        <div class="section-desc">
+          Assign a character to any RP channel or forum post below. Once assigned, simply type normally in that Discord channel and your message will automatically be replaced by your character proxy. When moving locations, select the new channel from the dropdown.
         </div>
-
-        <div id="customWebhookGroup" class="form-group">
-          <label>Paste Discord Channel Webhook URL (Server Settings → Integrations → Webhooks):</label>
-          <input type="text" id="composeCustomWebhook" placeholder="https://discord.com/api/webhooks/..." />
-        </div>
-
-        <label>Click to Insert Custom Bot Emoji:</label>
-        <div id="composerEmojiBar" class="emoji-bar"></div>
-
-        <div class="form-group">
-          <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-            <label>Roleplay Post Content:</label>
-            <span id="charCounter" style="font-size:0.8rem; color:var(--text-muted);">0 / 2000</span>
-          </div>
-          <textarea id="composeContent" rows="6" placeholder="Write your roleplay message here..." oninput="updateCounter()"></textarea>
-        </div>
-
-        <div style="display:flex; gap:12px;">
-          <button class="btn" onclick="sendDirectRoleplayPost()">Send Proxied Post to Discord</button>
-          <button class="btn btn-secondary" onclick="saveCurrentDraft()">💾 Save Draft</button>
-        </div>
-      </div>
-
-      <!-- TAB 2: CHARACTER SLOTS -->
-      <div id="tabSlots" class="card hidden">
-        <h3 style="margin-bottom: 14px;">Your Character Profiles</h3>
         <div id="slotsGrid" class="slots-grid"></div>
       </div>
 
-      <!-- TAB 3: ACCOUNT & DISCORD LINK -->
+      <!-- TAB 2: DISCORD ID LINK -->
       <div id="tabAccount" class="card hidden">
-        <h3 style="margin-bottom: 14px;">Link Your Discord User ID</h3>
-        <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:16px;">
-          Linking your numeric Discord ID allows you to use <code>/postw</code> and <code>/slots</code> directly inside Discord channels.
-        </p>
-        <div class="form-group" style="max-width:400px;">
-          <label>Your Numeric Discord User ID</label>
+        <div class="section-title">Discord Account Link</div>
+        <div class="section-desc">
+          Your numeric Discord User ID connects your Discord messages and slash commands to your character slots.
+        </div>
+        <div class="form-group" style="max-width: 380px;">
+          <label>Discord User ID</label>
           <input type="text" id="accountDiscordId" placeholder="123456789012345678" />
         </div>
-        <button class="btn" onclick="saveDiscordId()">Save Discord ID</button>
+        <button class="btn" onclick="saveDiscordId()">Update Discord ID</button>
       </div>
 
-      <!-- TAB 4: ADMIN CONSOLE -->
+      <!-- TAB 3: ADMIN PANEL -->
       <div id="tabAdmin" class="card hidden">
-        <h3 style="margin-bottom: 18px;">Enclave Spiral Staff Console</h3>
-        
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:24px;">
-          <!-- Unlock User Slots -->
+        <div class="section-title">Roleplay Category Selection</div>
+        <div class="section-desc">
+          Select which Discord server categories contain roleplay channels and forum channels. Players will be able to route their characters to any text channel or active forum post inside these categories.
+        </div>
+        <div id="adminCategoryList" class="category-checklist"></div>
+        <button class="btn" onclick="adminSaveCategories()">Save Allowed RP Categories</button>
+
+        <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 24px 0;" />
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
           <div>
-            <h4></h4> Manage Player Slot Limits</h4>
-            <div class="form-group" style="margin-top:10px;">
-              <label>Select User</label>
+            <div class="section-title">User Slot Limits</div>
+            <div class="form-group" style="margin-top: 10px;">
+              <label>User Account</label>
               <select id="adminUserSelect"></select>
             </div>
             <div class="form-group">
-              <label>Max Character Slots (1 - 25)</label>
+              <label>Maximum Slots (1 - 25)</label>
               <input type="number" id="adminSlotCount" value="5" min="1" max="25" />
             </div>
-            <button class="btn" onclick="adminUpdateUserSlots()">Update User Slots</button>
+            <button class="btn" onclick="adminUpdateUserSlots()">Save Slot Limit</button>
           </div>
 
-          <!-- Save Preset Channel Webhooks -->
           <div>
-            <h4>Add Server Channel Webhook</h4>
-            <div class="form-group" style="margin-top:10px;">
-              <label>Channel Display Name (e.g. #citadel-plaza)</label>
-              <input type="text" id="adminHookName" placeholder="#roleplay-general" />
+            <div class="section-title">Custom Emoji Registry</div>
+            <div class="form-group" style="margin-top: 10px;">
+              <label>Shortcode</label>
+              <input type="text" id="adminEmojiCode" placeholder=":shortcode:" />
             </div>
             <div class="form-group">
-              <label>Discord Webhook URL</label>
-              <input type="text" id="adminHookUrl" placeholder="https://discord.com/api/webhooks/..." />
+              <label>Discord Emoji Tag</label>
+              <input type="text" id="adminEmojiTag" placeholder="<:name:123456789012345678>" />
             </div>
-            <button class="btn btn-success" onclick="adminAddWebhook()">Save Channel Webhook</button>
-            <div id="adminWebhookList" style="margin-top:12px; font-size:0.85rem;"></div>
+            <button class="btn" onclick="adminAddEmoji()">Register Emoji</button>
+            <div id="adminEmojiList" style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;"></div>
           </div>
-        </div>
-
-        <hr style="border:0; border-top:1px solid var(--border); margin:24px 0;" />
-
-        <!-- Add Custom Bot Emojis -->
-        <div>
-          <h4>Custom Bot Emojis</h4>
-          <div style="display:grid; grid-template-columns: 1fr 1fr auto; gap:10px; margin-top:10px; align-items:end;">
-            <div>
-              <label>Shortcode (e.g. :spiral:)</label>
-              <input type="text" id="adminEmojiCode" placeholder=":spiral:" />
-            </div>
-            <div>
-              <label>Full Discord Emoji Tag (e.g. &lt;:spiral:123456789&gt;)</label>
-              <input type="text" id="adminEmojiTag" placeholder="<:spiral:123456789012345678>" />
-            </div>
-            <button class="btn" onclick="adminAddEmoji()">Add Emoji</button>
-          </div>
-          <div id="adminEmojiList" style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;"></div>
         </div>
       </div>
     </div>
@@ -315,16 +440,18 @@
       user: null,
       characters: [],
       emojis: [],
-      webhooks: [],
+      allowedCategoryIds: [],
+      serverCategories: [],
+      rpChannels: [],
       allUsers: [],
       croppedImages: {}
     };
 
-    function showStatus(msg, isError = false) {
-      const box = document.getElementById("statusBox");
+    function notify(msg, isError = false) {
+      const box = document.getElementById("noticeBox");
       box.textContent = msg;
-      box.className = "status-banner " + (isError ? "status-err" : "status-ok");
-      setTimeout(() => { box.className = "status-banner"; }, 6000);
+      box.className = "notice-bar show " + (isError ? "error" : "ok");
+      setTimeout(() => { box.className = "notice-bar"; }, 5000);
     }
 
     async function callApi(payload) {
@@ -344,10 +471,10 @@
     }
 
     function switchMainTab(tab) {
-      ["composer", "slots", "account", "admin"].forEach(t => {
-        const el = document.getElementById("tab" + t.charAt(0).toUpperCase() + t.slice(1));
+      ["slots", "account", "admin"].forEach(t => {
+        const view = document.getElementById("tab" + t.charAt(0).toUpperCase() + t.slice(1));
         const nav = document.getElementById("nav" + t.charAt(0).toUpperCase() + t.slice(1));
-        if (el) el.classList.toggle("hidden", t !== tab);
+        if (view) view.classList.toggle("hidden", t !== tab);
         if (nav) nav.classList.toggle("active", t === tab);
       });
     }
@@ -355,13 +482,13 @@
     async function submitLogin() {
       const gamerTag = document.getElementById("loginTag").value.trim();
       const password = document.getElementById("loginPass").value.trim();
-      showStatus("Signing in...");
+      notify("Authenticating...");
       try {
         const data = await callApi({ action: "login", gamerTag, password });
-        if (!data.success) return showStatus(data.error || "Login failed", true);
+        if (!data.success) return notify(data.error || "Sign in failed.", true);
         loadDashboard(data);
       } catch (e) {
-        showStatus("Network error connecting to Apps Script: " + e.message, true);
+        notify("Connection error: " + e.message, true);
       }
     }
 
@@ -369,21 +496,30 @@
       const gamerTag = document.getElementById("regTag").value.trim();
       const password = document.getElementById("regPass").value.trim();
       const discordId = document.getElementById("regDiscordId").value.trim();
-      showStatus("Creating your account...");
+      notify("Creating account...");
       try {
         const data = await callApi({ action: "register", gamerTag, password, discordId });
-        if (!data.success) return showStatus(data.error || "Registration failed", true);
+        if (!data.success) return notify(data.error || "Registration failed.", true);
         loadDashboard(data);
       } catch (e) {
-        showStatus("Network error: " + e.message, true);
+        notify("Connection error: " + e.message, true);
       }
+    }
+
+    async function refreshDashboard() {
+      if (!STATE.user) return;
+      notify("Refreshing channels and forum threads...");
+      const data = await callApi({ action: "getDashboardData", userId: STATE.user.userId });
+      if (data.success) loadDashboard(data);
     }
 
     function loadDashboard(data) {
       STATE.user = data.user;
       STATE.characters = data.characters || [];
       STATE.emojis = data.emojis || [];
-      STATE.webhooks = data.webhooks || [];
+      STATE.allowedCategoryIds = data.allowedCategoryIds || [];
+      STATE.serverCategories = data.serverCategories || [];
+      STATE.rpChannels = data.rpChannels || [];
       STATE.allUsers = data.allUsers || [];
 
       localStorage.setItem("enclave_uid", STATE.user.userId);
@@ -391,151 +527,109 @@
       document.getElementById("authView").classList.add("hidden");
       document.getElementById("dashboardView").classList.remove("hidden");
       document.getElementById("userBar").classList.remove("hidden");
-      document.getElementById("welcomeTag").textContent = `${STATE.user.gamerTag} (${STATE.user.role.toUpperCase()})`;
+      document.getElementById("welcomeTag").textContent = STATE.user.gamerTag + " (" + STATE.user.role + ")";
       document.getElementById("accountDiscordId").value = STATE.user.discordId || "";
 
-      if (STATE.user.role === "admin") {
-        document.getElementById("navAdmin").classList.remove("hidden");
-      } else {
-        document.getElementById("navAdmin").classList.add("hidden");
-      }
+      document.getElementById("navAdmin").classList.toggle("hidden", STATE.user.role !== "admin");
 
-      if (data.draft) {
-        document.getElementById("composeContent").value = data.draft;
-        updateCounter();
-      }
-
-      renderComposer();
       renderSlots();
       renderAdmin();
-      showStatus("Welcome back, " + STATE.user.gamerTag + "!");
+      notify("Control panel ready.");
     }
 
-    function renderComposer() {
-      const charSel = document.getElementById("composeCharSelect");
-      charSel.innerHTML = "";
-      const activeChars = STATE.characters.filter(c => c.isActive);
-      if (activeChars.length === 0) {
-        charSel.innerHTML = `<option value="">-- Enable a slot in Character Slots tab --</option>`;
-      } else {
-        activeChars.forEach(c => {
-          const opt = document.createElement("option");
-          opt.value = c.characterId;
-          opt.textContent = `Slot #${c.slotNumber}: ${c.avatarName}`;
-          charSel.appendChild(opt);
-        });
-      }
+    function buildChannelOptionsHtml(selectedChannelId) {
+      let html = `<option value="">-- Unassigned (Not Proxying) --</option>`;
+      const grouped = {};
 
-      const hookSel = document.getElementById("composeWebhookSelect");
-      hookSel.innerHTML = `<option value="CUSTOM">-- Paste Custom Channel Webhook URL --</option>`;
-      STATE.webhooks.forEach(w => {
-        const opt = document.createElement("option");
-        opt.value = w.webhookUrl;
-        opt.textContent = w.channelName;
-        hookSel.appendChild(opt);
-      });
-      if (STATE.webhooks.length > 0) {
-        hookSel.value = STATE.webhooks[0].webhookUrl;
-      }
-      toggleCustomWebhookInput();
-
-      const emojiBar = document.getElementById("composerEmojiBar");
-      emojiBar.innerHTML = "";
-      if (STATE.emojis.length === 0) {
-        emojiBar.innerHTML = `<span style="font-size:0.8rem; color:var(--text-muted);">No custom emojis registered yet.</span>`;
-      } else {
-        STATE.emojis.forEach(em => {
-          const btn = document.createElement("button");
-          btn.className = "emoji-chip";
-          btn.textContent = em.shortcode;
-          btn.onclick = () => {
-            const box = document.getElementById("composeContent");
-            box.value += " " + em.shortcode + " ";
-            updateCounter();
-          };
-          emojiBar.appendChild(btn);
-        });
-      }
-    }
-
-    function toggleCustomWebhookInput() {
-      const val = document.getElementById("composeWebhookSelect").value;
-      document.getElementById("customWebhookGroup").classList.toggle("hidden", val !== "CUSTOM");
-    }
-
-    function updateCounter() {
-      const len = document.getElementById("composeContent").value.length;
-      const el = document.getElementById("charCounter");
-      el.textContent = `${len} / 2000`;
-      el.style.color = len > 2000 ? "#ff4757" : "var(--text-muted)";
-    }
-
-    async function sendDirectRoleplayPost() {
-      const characterId = document.getElementById("composeCharSelect").value;
-      const hookSel = document.getElementById("composeWebhookSelect").value;
-      const webhookUrl = hookSel === "CUSTOM" ? document.getElementById("composeCustomWebhook").value.trim() : hookSel;
-      const content = document.getElementById("composeContent").value;
-
-      if (!characterId) return showStatus("Please select an active character slot first.", true);
-      if (!webhookUrl) return showStatus("Please select a channel or paste a Discord Webhook URL.", true);
-
-      showStatus("Dispatching proxied message to Discord...");
-      const res = await callApi({
-        action: "sendDirectPost",
-        userId: STATE.user.userId,
-        characterId,
-        webhookUrl,
-        content
+      STATE.rpChannels.forEach(ch => {
+        const g = ch.categoryName || "Channels";
+        if (!grouped[g]) grouped[g] = [];
+        grouped[g].push(ch);
       });
 
-      if (!res.success) {
-        return showStatus(res.error || "Failed to send post", true);
-      }
+      Object.keys(grouped).forEach(catName => {
+        html += `<optgroup label="${catName.replace(/"/g, '&quot;')}">`;
+        grouped[catName].forEach(ch => {
+          const sel = String(ch.id) === String(selectedChannelId) ? "selected" : "";
+          html += `<option value="${ch.id}" data-parent="${ch.parentChannelId}" data-thread="${ch.isThread}" data-name="${ch.name.replace(/"/g, '&quot;')}" ${sel}>${ch.name}</option>`;
+        });
+        html += `</optgroup>`;
+      });
 
-      document.getElementById("composeContent").value = "";
-      updateCounter();
-      showStatus("✨ Roleplay post dispatched to Discord! (" + res.charCount + "/2000 chars)");
-    }
-
-    async function saveCurrentDraft() {
-      const content = document.getElementById("composeContent").value;
-      const characterId = document.getElementById("composeCharSelect").value;
-      await callApi({ action: "saveDraft", userId: STATE.user.userId, characterId, content });
-      showStatus("💾 Draft saved to cloud.");
+      return html;
     }
 
     function renderSlots() {
       const grid = document.getElementById("slotsGrid");
       grid.innerHTML = "";
+
       STATE.characters.forEach(c => {
+        const isBound = Boolean(c.boundChannelId);
         const card = document.createElement("div");
-        card.className = "slot-card";
+        card.className = "slot-card" + (isBound ? " bound" : "");
+
         card.innerHTML = `
-          <div class="slot-header">
-            <img id="img_${c.characterId}" src="${c.avatarUrl}" class="avatar-preview" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'" />
-            <div style="flex:1;">
-              <strong style="font-size:0.85rem; color:var(--accent);">SLOT #${c.slotNumber}</strong>
-              <input type="text" id="name_${c.characterId}" value="${c.avatarName.replace(/"/g, '&quot;')}" style="margin-top:4px;" />
+          <div class="slot-top">
+            <img id="img_${c.characterId}" src="${c.avatarUrl}" class="avatar-img" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'" />
+            <div style="flex: 1;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 0.76rem; font-weight: 600; color: var(--text-secondary);">SLOT ${c.slotNumber}</span>
+                <span class="badge ${isBound ? 'active-route' : ''}">${isBound ? 'Active in ' + c.boundChannelName : 'Standby'}</span>
+              </div>
+              <input type="text" id="name_${c.characterId}" value="${c.avatarName.replace(/"/g, '&quot;')}" style="margin-top: 6px;" />
             </div>
           </div>
-          <div>
-            <label>Avatar Image URL (or Upload File Below)</label>
-            <input type="text" id="url_${c.characterId}" value="${c.avatarUrl}" />
+
+          <div class="form-group" style="margin-bottom: 0;">
+            <label>Assigned Roleplay Channel / Forum Post</label>
+            <select id="chan_${c.characterId}" onchange="bindChannel('${c.characterId}')">
+              ${buildChannelOptionsHtml(c.boundChannelId)}
+            </select>
           </div>
-          <div>
-            <label>Upload & Auto-Crop Avatar (128x128)</label>
-            <input type="file" accept="image/*" onchange="cropAvatarFile(event, '${c.characterId}')" />
+
+          <div class="form-group" style="margin-bottom: 0;">
+            <label>Avatar URL or Upload Image</label>
+            <input type="text" id="url_${c.characterId}" value="${c.avatarUrl}" style="margin-bottom: 6px;" />
+            <input type="file" accept="image/*" onchange="cropAvatarFile(event, '${c.characterId}')" style="font-size: 0.8rem;" />
           </div>
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
-            <label style="display:flex; align-items:center; gap:8px; margin:0; cursor:pointer;">
-              <input type="checkbox" id="active_${c.characterId}" ${c.isActive ? "checked" : ""} style="width:auto;" />
-              Active Slot
+
+          <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 4px;">
+            <label style="display: flex; align-items: center; gap: 6px; margin: 0; cursor: pointer;">
+              <input type="checkbox" id="active_${c.characterId}" ${c.isActive ? "checked" : ""} />
+              Slot Enabled
             </label>
-            <button class="btn" onclick="saveSlot('${c.characterId}')">Save Slot</button>
+            <button class="btn" onclick="saveSlot('${c.characterId}')">Save Profile</button>
           </div>
         `;
         grid.appendChild(card);
       });
+    }
+
+    async function bindChannel(charId) {
+      const sel = document.getElementById("chan_" + charId);
+      const opt = sel.options[sel.selectedIndex];
+      const channelId = sel.value;
+      const channelName = channelId ? (opt.getAttribute("data-name") || opt.textContent) : "Unassigned";
+      const parentChannelId = channelId ? (opt.getAttribute("data-parent") || channelId) : "";
+      const isThread = channelId ? (opt.getAttribute("data-thread") === "true") : false;
+
+      notify("Updating channel routing...");
+      const res = await callApi({
+        action: "bindCharacterChannel",
+        userId: STATE.user.userId,
+        characterId: charId,
+        channelId,
+        channelName,
+        parentChannelId,
+        isThread
+      });
+
+      if (res.success) {
+        loadDashboard(res);
+        notify(channelId ? "Character routed to " + channelName : "Character unbound from channel.");
+      } else {
+        notify(res.error || "Failed to bind channel.", true);
+      }
     }
 
     function cropAvatarFile(event, charId) {
@@ -568,7 +662,7 @@
       const isActive = document.getElementById("active_" + charId).checked;
       const base64Image = STATE.croppedImages[charId] || null;
 
-      showStatus("Saving character slot...");
+      notify("Saving character profile...");
       const res = await callApi({
         action: "saveCharacter",
         userId: STATE.user.userId,
@@ -579,14 +673,13 @@
         base64Image
       });
 
-      if (!res.success) return showStatus(res.error || "Failed to save slot", true);
+      if (!res.success) return notify(res.error || "Failed to save profile.", true);
       delete STATE.croppedImages[charId];
 
       const idx = STATE.characters.findIndex(x => x.characterId === charId);
       if (idx !== -1) STATE.characters[idx] = { ...STATE.characters[idx], ...res.character };
       renderSlots();
-      renderComposer();
-      showStatus("Character slot saved!");
+      notify("Profile saved.");
     }
 
     async function saveDiscordId() {
@@ -594,33 +687,53 @@
       const res = await callApi({ action: "updateDiscordId", userId: STATE.user.userId, discordId });
       if (res.success) {
         STATE.user.discordId = discordId;
-        showStatus("Discord User ID linked!");
+        notify("Discord User ID updated.");
       }
     }
 
     function renderAdmin() {
       if (STATE.user.role !== "admin") return;
-      const uSel = document.getElementById("adminUserSelect");
-      uSel.innerHTML = "";
-      STATE.allUsers.forEach(u => {
-        const opt = document.createElement("option");
-        opt.value = u.userId;
-        opt.textContent = `${u.gamerTag} (${u.maxSlots} slots)`;
-        uSel.appendChild(opt);
-      });
 
-      const hList = document.getElementById("adminWebhookList");
-      hList.innerHTML = STATE.webhooks.map(w => `
-        <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--border);">
-          <span>${w.channelName}</span>
-          <a href="#" style="color:var(--danger);" onclick="adminRemoveWebhook('${w.webhookId}')">Remove</a>
-        </div>
-      `).join("");
+      const catList = document.getElementById("adminCategoryList");
+      if (STATE.serverCategories.length === 0) {
+        catList.innerHTML = `<div style="font-size: 0.85rem; color: var(--text-secondary);">No categories found. Verify DISCORD_BOT_TOKEN and DISCORD_GUILD_ID in Google Apps Script Properties.</div>`;
+      } else {
+        catList.innerHTML = STATE.serverCategories.map(cat => {
+          const checked = STATE.allowedCategoryIds.indexOf(String(cat.id)) !== -1 ? "checked" : "";
+          return `
+            <label class="cat-item">
+              <input type="checkbox" class="admin-cat-check" value="${cat.id}" data-name="${cat.name.replace(/"/g, '&quot;')}" ${checked} />
+              <span>${cat.name}</span>
+            </label>
+          `;
+        }).join("");
+      }
+
+      const uSel = document.getElementById("adminUserSelect");
+      uSel.innerHTML = STATE.allUsers.map(u => `<option value="${u.userId}">${u.gamerTag} (${u.maxSlots} slots)</option>`).join("");
 
       const eList = document.getElementById("adminEmojiList");
       eList.innerHTML = STATE.emojis.map(e => `
-        <span class="emoji-chip">${e.shortcode} <b style="color:var(--danger); margin-left:6px;" onclick="adminRemoveEmoji('${e.emojiId}')">×</b></span>
+        <span class="badge">
+          ${e.shortcode}
+          <a href="#" style="color: var(--status-danger); margin-left: 6px; text-decoration: none;" onclick="adminRemoveEmoji('${e.emojiId}')">Remove</a>
+        </span>
       `).join("");
+    }
+
+    async function adminSaveCategories() {
+      const checks = document.querySelectorAll(".admin-cat-check:checked");
+      const categories = Array.from(checks).map(ch => ({
+        id: ch.value,
+        name: ch.getAttribute("data-name")
+      }));
+
+      notify("Saving allowed roleplay categories...");
+      const res = await callApi({ action: "adminSaveCategories", categories });
+      if (res.success) {
+        await refreshDashboard();
+        notify("Roleplay categories updated.");
+      }
     }
 
     async function adminUpdateUserSlots() {
@@ -628,31 +741,9 @@
       const maxSlots = document.getElementById("adminSlotCount").value;
       const res = await callApi({ action: "adminUpdateSlots", targetUserId, maxSlots });
       if (res.success) {
-        const refreshed = await callApi({ action: "getDashboardData", userId: STATE.user.userId });
-        loadDashboard(refreshed);
-        showStatus("Updated player slot limit!");
+        await refreshDashboard();
+        notify("User slot limit updated.");
       }
-    }
-
-    async function adminAddWebhook() {
-      const channelName = document.getElementById("adminHookName").value.trim();
-      const webhookUrl = document.getElementById("adminHookUrl").value.trim();
-      const res = await callApi({ action: "adminSaveWebhook", channelName, webhookUrl });
-      if (res.success) {
-        STATE.webhooks.push(res.webhook);
-        renderAdmin();
-        renderComposer();
-        showStatus("Channel Webhook saved!");
-      } else {
-        showStatus(res.error, true);
-      }
-    }
-
-    async function adminRemoveWebhook(webhookId) {
-      await callApi({ action: "adminDeleteWebhook", webhookId });
-      STATE.webhooks = STATE.webhooks.filter(w => w.webhookId !== webhookId);
-      renderAdmin();
-      renderComposer();
     }
 
     async function adminAddEmoji() {
@@ -662,8 +753,7 @@
       if (res.success) {
         STATE.emojis.push(res.emoji);
         renderAdmin();
-        renderComposer();
-        showStatus("Emoji added!");
+        notify("Emoji registered.");
       }
     }
 
@@ -671,7 +761,6 @@
       await callApi({ action: "adminDeleteEmoji", emojiId });
       STATE.emojis = STATE.emojis.filter(e => e.emojiId !== emojiId);
       renderAdmin();
-      renderComposer();
     }
 
     function logout() {
