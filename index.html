@@ -16,7 +16,8 @@
       --accent-primary: #7c8ce0;
       --accent-hover: #6778d1;
       --accent-soft: #e8ecfb;
-      --status-active: #76b59b;
+      --status-active: #68a88e;
+      --status-active-bg: rgba(104, 168, 142, 0.14);
       --status-danger: #d9828b;
       --shadow-soft: 0 4px 18px rgba(43, 45, 56, 0.06);
     }
@@ -34,6 +35,7 @@
         --accent-hover: #bac5ff;
         --accent-soft: rgba(163, 177, 248, 0.14);
         --status-active: #8cc9ad;
+        --status-active-bg: rgba(140, 201, 173, 0.14);
         --status-danger: #eba0a8;
         --shadow-soft: 0 6px 24px rgba(0, 0, 0, 0.28);
       }
@@ -79,13 +81,13 @@
     .user-meta {
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 12px;
       font-size: 0.88rem;
       color: var(--text-secondary);
     }
 
     .container {
-      max-width: 980px;
+      max-width: 960px;
       width: 100%;
       margin: 24px auto;
       padding: 0 16px;
@@ -99,6 +101,25 @@
       padding: 22px;
       margin-bottom: 18px;
       box-shadow: var(--shadow-soft);
+    }
+
+    /* Master Proxy Status Bar */
+    .proxy-status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-radius: 10px;
+      margin-bottom: 18px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-surface);
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .proxy-status-bar.is-on {
+      border-color: var(--status-active);
+      background: var(--status-active-bg);
     }
 
     .section-title {
@@ -183,10 +204,10 @@
       border: none;
       padding: 9px 16px;
       border-radius: 6px;
-      font-size: 0.88rem;
+      font-size: 0.86rem;
       font-weight: 600;
       cursor: pointer;
-      transition: background 0.15s ease;
+      transition: all 0.15s ease;
     }
 
     .btn:hover {
@@ -204,15 +225,19 @@
       background: var(--accent-soft);
     }
 
+    .btn-active-proxy {
+      background: var(--status-active);
+      color: #16171d;
+    }
+
     .btn-danger {
       background: var(--status-danger);
       color: #16171d;
     }
 
-    /* Slots & Channel Assignment Grid */
     .slots-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
       gap: 16px;
     }
 
@@ -226,8 +251,8 @@
       gap: 12px;
     }
 
-    .slot-card.bound {
-      border-color: var(--status-active);
+    .slot-card.active-card {
+      border: 2px solid var(--status-active);
     }
 
     .slot-top {
@@ -256,29 +281,10 @@
       border: 1px solid var(--border-color);
     }
 
-    .badge.active-route {
-      background: rgba(118, 181, 155, 0.18);
+    .badge.on {
+      background: var(--status-active-bg);
       color: var(--status-active);
       border-color: var(--status-active);
-    }
-
-    .category-checklist {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-      gap: 10px;
-      margin: 12px 0;
-    }
-
-    .cat-item {
-      background: var(--bg-subtle);
-      border: 1px solid var(--border-color);
-      padding: 8px 12px;
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.86rem;
-      cursor: pointer;
     }
 
     .notice-bar {
@@ -316,7 +322,6 @@
     <div class="brand">Enclave <span>Spiral</span></div>
     <div id="userBar" class="user-meta hidden">
       <span id="welcomeTag"></span>
-      <button class="btn btn-outline" onclick="refreshDashboard()">Refresh Channels</button>
       <button class="btn btn-outline" onclick="logout()">Sign Out</button>
     </div>
   </header>
@@ -362,17 +367,33 @@
 
     <!-- CONTROL PANEL -->
     <div id="dashboardView" class="hidden">
+
+      <!-- MASTER PROXY STATUS BANNER -->
+      <div id="masterStatusBar" class="proxy-status-bar">
+        <div>
+          <div style="font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); font-weight: 600;">
+            Current Proxy Mode
+          </div>
+          <div id="masterStatusText" style="font-size: 1.02rem; font-weight: 600; margin-top: 2px;">
+            Proxy OFF — Speaking as yourself
+          </div>
+        </div>
+        <button id="masterOffBtn" class="btn btn-outline hidden" onclick="toggleCharacterProxy('', false)">
+          Turn Proxy OFF
+        </button>
+      </div>
+
       <div class="nav-tabs">
-        <button class="tab-btn active" id="navSlots" onclick="switchMainTab('slots')">Character Routing & Slots</button>
-        <button class="tab-btn" id="navAccount" onclick="switchMainTab('account')">Discord Account Link</button>
+        <button class="tab-btn active" id="navSlots" onclick="switchMainTab('slots')">Character Slots</button>
+        <button class="tab-btn" id="navAccount" onclick="switchMainTab('account')">Discord Link</button>
         <button class="tab-btn hidden" id="navAdmin" onclick="switchMainTab('admin')">Administration</button>
       </div>
 
-      <!-- TAB 1: CHARACTER SLOTS & CHANNEL ROUTING -->
+      <!-- TAB 1: CHARACTER SLOTS -->
       <div id="tabSlots" class="card">
-        <div class="section-title">Character Slots & Active Channel Assignment</div>
+        <div class="section-title">Character Profiles & Proxy Switch</div>
         <div class="section-desc">
-          Assign a character to any RP channel or forum post below. Once assigned, simply type normally in that Discord channel and your message will automatically be replaced by your character proxy. When moving locations, select the new channel from the dropdown.
+          Toggle any character slot ON to automatically replace your Discord messages with that character's name and avatar wherever you type. Toggle it OFF to type normally.
         </div>
         <div id="slotsGrid" class="slots-grid"></div>
       </div>
@@ -381,30 +402,22 @@
       <div id="tabAccount" class="card hidden">
         <div class="section-title">Discord Account Link</div>
         <div class="section-desc">
-          Your numeric Discord User ID connects your Discord messages and slash commands to your character slots.
+          Enter your numeric Discord User ID so the bot knows which messages belong to your account.
         </div>
         <div class="form-group" style="max-width: 380px;">
           <label>Discord User ID</label>
           <input type="text" id="accountDiscordId" placeholder="123456789012345678" />
         </div>
-        <button class="btn" onclick="saveDiscordId()">Update Discord ID</button>
+        <button class="btn" onclick="saveDiscordId()">Save Discord ID</button>
       </div>
 
       <!-- TAB 3: ADMIN PANEL -->
       <div id="tabAdmin" class="card hidden">
-        <div class="section-title">Roleplay Category Selection</div>
-        <div class="section-desc">
-          Select which Discord server categories contain roleplay channels and forum channels. Players will be able to route their characters to any text channel or active forum post inside these categories.
-        </div>
-        <div id="adminCategoryList" class="category-checklist"></div>
-        <button class="btn" onclick="adminSaveCategories()">Save Allowed RP Categories</button>
-
-        <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 24px 0;" />
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px;">
           <div>
             <div class="section-title">User Slot Limits</div>
-            <div class="form-group" style="margin-top: 10px;">
+            <div class="section-desc">Unlock additional character slots for registered players.</div>
+            <div class="form-group">
               <label>User Account</label>
               <select id="adminUserSelect"></select>
             </div>
@@ -412,12 +425,13 @@
               <label>Maximum Slots (1 - 25)</label>
               <input type="number" id="adminSlotCount" value="5" min="1" max="25" />
             </div>
-            <button class="btn" onclick="adminUpdateUserSlots()">Save Slot Limit</button>
+            <button class="btn" onclick="adminUpdateUserSlots()">Update Slot Limit</button>
           </div>
 
           <div>
             <div class="section-title">Custom Emoji Registry</div>
-            <div class="form-group" style="margin-top: 10px;">
+            <div class="section-desc">Register custom bot or server emojis for automatic shortcode replacement.</div>
+            <div class="form-group">
               <label>Shortcode</label>
               <input type="text" id="adminEmojiCode" placeholder=":shortcode:" />
             </div>
@@ -440,9 +454,6 @@
       user: null,
       characters: [],
       emojis: [],
-      allowedCategoryIds: [],
-      serverCategories: [],
-      rpChannels: [],
       allUsers: [],
       croppedImages: {}
     };
@@ -482,7 +493,7 @@
     async function submitLogin() {
       const gamerTag = document.getElementById("loginTag").value.trim();
       const password = document.getElementById("loginPass").value.trim();
-      notify("Authenticating...");
+      notify("Signing in...");
       try {
         const data = await callApi({ action: "login", gamerTag, password });
         if (!data.success) return notify(data.error || "Sign in failed.", true);
@@ -506,20 +517,10 @@
       }
     }
 
-    async function refreshDashboard() {
-      if (!STATE.user) return;
-      notify("Refreshing channels and forum threads...");
-      const data = await callApi({ action: "getDashboardData", userId: STATE.user.userId });
-      if (data.success) loadDashboard(data);
-    }
-
     function loadDashboard(data) {
       STATE.user = data.user;
       STATE.characters = data.characters || [];
       STATE.emojis = data.emojis || [];
-      STATE.allowedCategoryIds = data.allowedCategoryIds || [];
-      STATE.serverCategories = data.serverCategories || [];
-      STATE.rpChannels = data.rpChannels || [];
       STATE.allUsers = data.allUsers || [];
 
       localStorage.setItem("enclave_uid", STATE.user.userId);
@@ -532,31 +533,26 @@
 
       document.getElementById("navAdmin").classList.toggle("hidden", STATE.user.role !== "admin");
 
+      renderMasterStatus();
       renderSlots();
       renderAdmin();
-      notify("Control panel ready.");
     }
 
-    function buildChannelOptionsHtml(selectedChannelId) {
-      let html = `<option value="">-- Unassigned (Not Proxying) --</option>`;
-      const grouped = {};
+    function renderMasterStatus() {
+      const activeChar = STATE.characters.find(c => c.isActive);
+      const bar = document.getElementById("masterStatusBar");
+      const text = document.getElementById("masterStatusText");
+      const offBtn = document.getElementById("masterOffBtn");
 
-      STATE.rpChannels.forEach(ch => {
-        const g = ch.categoryName || "Channels";
-        if (!grouped[g]) grouped[g] = [];
-        grouped[g].push(ch);
-      });
-
-      Object.keys(grouped).forEach(catName => {
-        html += `<optgroup label="${catName.replace(/"/g, '&quot;')}">`;
-        grouped[catName].forEach(ch => {
-          const sel = String(ch.id) === String(selectedChannelId) ? "selected" : "";
-          html += `<option value="${ch.id}" data-parent="${ch.parentChannelId}" data-thread="${ch.isThread}" data-name="${ch.name.replace(/"/g, '&quot;')}" ${sel}>${ch.name}</option>`;
-        });
-        html += `</optgroup>`;
-      });
-
-      return html;
+      if (activeChar) {
+        bar.classList.add("is-on");
+        text.textContent = "Proxy ON — Speaking as " + activeChar.avatarName + " (Slot " + activeChar.slotNumber + ")";
+        offBtn.classList.remove("hidden");
+      } else {
+        bar.classList.remove("is-on");
+        text.textContent = "Proxy OFF — Speaking as your normal Discord account";
+        offBtn.classList.add("hidden");
+      }
     }
 
     function renderSlots() {
@@ -564,9 +560,8 @@
       grid.innerHTML = "";
 
       STATE.characters.forEach(c => {
-        const isBound = Boolean(c.boundChannelId);
         const card = document.createElement("div");
-        card.className = "slot-card" + (isBound ? " bound" : "");
+        card.className = "slot-card" + (c.isActive ? " active-card" : "");
 
         card.innerHTML = `
           <div class="slot-top">
@@ -574,17 +569,10 @@
             <div style="flex: 1;">
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span style="font-size: 0.76rem; font-weight: 600; color: var(--text-secondary);">SLOT ${c.slotNumber}</span>
-                <span class="badge ${isBound ? 'active-route' : ''}">${isBound ? 'Active in ' + c.boundChannelName : 'Standby'}</span>
+                <span class="badge ${c.isActive ? 'on' : ''}">${c.isActive ? 'PROXY ON' : 'OFF'}</span>
               </div>
               <input type="text" id="name_${c.characterId}" value="${c.avatarName.replace(/"/g, '&quot;')}" style="margin-top: 6px;" />
             </div>
-          </div>
-
-          <div class="form-group" style="margin-bottom: 0;">
-            <label>Assigned Roleplay Channel / Forum Post</label>
-            <select id="chan_${c.characterId}" onchange="bindChannel('${c.characterId}')">
-              ${buildChannelOptionsHtml(c.boundChannelId)}
-            </select>
           </div>
 
           <div class="form-group" style="margin-bottom: 0;">
@@ -593,42 +581,33 @@
             <input type="file" accept="image/*" onchange="cropAvatarFile(event, '${c.characterId}')" style="font-size: 0.8rem;" />
           </div>
 
-          <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 4px;">
-            <label style="display: flex; align-items: center; gap: 6px; margin: 0; cursor: pointer;">
-              <input type="checkbox" id="active_${c.characterId}" ${c.isActive ? "checked" : ""} />
-              Slot Enabled
-            </label>
-            <button class="btn" onclick="saveSlot('${c.characterId}')">Save Profile</button>
+          <div style="display: flex; gap: 8px; padding-top: 4px;">
+            <button class="btn ${c.isActive ? 'btn-danger' : 'btn-active-proxy'}" style="flex: 1;" onclick="toggleCharacterProxy('${c.characterId}', ${!c.isActive})">
+              ${c.isActive ? 'Turn Proxy OFF' : 'Turn Proxy ON'}
+            </button>
+            <button class="btn btn-outline" onclick="saveSlot('${c.characterId}')">
+              Save Profile
+            </button>
           </div>
         `;
         grid.appendChild(card);
       });
     }
 
-    async function bindChannel(charId) {
-      const sel = document.getElementById("chan_" + charId);
-      const opt = sel.options[sel.selectedIndex];
-      const channelId = sel.value;
-      const channelName = channelId ? (opt.getAttribute("data-name") || opt.textContent) : "Unassigned";
-      const parentChannelId = channelId ? (opt.getAttribute("data-parent") || channelId) : "";
-      const isThread = channelId ? (opt.getAttribute("data-thread") === "true") : false;
-
-      notify("Updating channel routing...");
+    async function toggleCharacterProxy(charId, enable) {
+      notify(enable ? "Activating character proxy..." : "Turning proxy off...");
       const res = await callApi({
-        action: "bindCharacterChannel",
+        action: "toggleProxy",
         userId: STATE.user.userId,
         characterId: charId,
-        channelId,
-        channelName,
-        parentChannelId,
-        isThread
+        enable: enable
       });
 
       if (res.success) {
         loadDashboard(res);
-        notify(channelId ? "Character routed to " + channelName : "Character unbound from channel.");
+        notify(enable ? "Proxy turned ON." : "Proxy turned OFF.");
       } else {
-        notify(res.error || "Failed to bind channel.", true);
+        notify(res.error || "Failed to update proxy status.", true);
       }
     }
 
@@ -659,7 +638,6 @@
     async function saveSlot(charId) {
       const avatarName = document.getElementById("name_" + charId).value.trim();
       const avatarUrl = document.getElementById("url_" + charId).value.trim();
-      const isActive = document.getElementById("active_" + charId).checked;
       const base64Image = STATE.croppedImages[charId] || null;
 
       notify("Saving character profile...");
@@ -669,7 +647,6 @@
         characterId: charId,
         avatarName,
         avatarUrl,
-        isActive,
         base64Image
       });
 
@@ -678,6 +655,7 @@
 
       const idx = STATE.characters.findIndex(x => x.characterId === charId);
       if (idx !== -1) STATE.characters[idx] = { ...STATE.characters[idx], ...res.character };
+      renderMasterStatus();
       renderSlots();
       notify("Profile saved.");
     }
@@ -687,27 +665,12 @@
       const res = await callApi({ action: "updateDiscordId", userId: STATE.user.userId, discordId });
       if (res.success) {
         STATE.user.discordId = discordId;
-        notify("Discord User ID updated.");
+        notify("Discord User ID saved.");
       }
     }
 
     function renderAdmin() {
       if (STATE.user.role !== "admin") return;
-
-      const catList = document.getElementById("adminCategoryList");
-      if (STATE.serverCategories.length === 0) {
-        catList.innerHTML = `<div style="font-size: 0.85rem; color: var(--text-secondary);">No categories found. Verify DISCORD_BOT_TOKEN and DISCORD_GUILD_ID in Google Apps Script Properties.</div>`;
-      } else {
-        catList.innerHTML = STATE.serverCategories.map(cat => {
-          const checked = STATE.allowedCategoryIds.indexOf(String(cat.id)) !== -1 ? "checked" : "";
-          return `
-            <label class="cat-item">
-              <input type="checkbox" class="admin-cat-check" value="${cat.id}" data-name="${cat.name.replace(/"/g, '&quot;')}" ${checked} />
-              <span>${cat.name}</span>
-            </label>
-          `;
-        }).join("");
-      }
 
       const uSel = document.getElementById("adminUserSelect");
       uSel.innerHTML = STATE.allUsers.map(u => `<option value="${u.userId}">${u.gamerTag} (${u.maxSlots} slots)</option>`).join("");
@@ -721,27 +684,13 @@
       `).join("");
     }
 
-    async function adminSaveCategories() {
-      const checks = document.querySelectorAll(".admin-cat-check:checked");
-      const categories = Array.from(checks).map(ch => ({
-        id: ch.value,
-        name: ch.getAttribute("data-name")
-      }));
-
-      notify("Saving allowed roleplay categories...");
-      const res = await callApi({ action: "adminSaveCategories", categories });
-      if (res.success) {
-        await refreshDashboard();
-        notify("Roleplay categories updated.");
-      }
-    }
-
     async function adminUpdateUserSlots() {
       const targetUserId = document.getElementById("adminUserSelect").value;
       const maxSlots = document.getElementById("adminSlotCount").value;
       const res = await callApi({ action: "adminUpdateSlots", targetUserId, maxSlots });
       if (res.success) {
-        await refreshDashboard();
+        const refreshed = await callApi({ action: "getDashboardData", userId: STATE.user.userId });
+        if (refreshed.success) loadDashboard(refreshed);
         notify("User slot limit updated.");
       }
     }
